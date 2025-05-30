@@ -1,173 +1,162 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import HelpRequestForm from "@/components/forms/help-request-form";
-import { Heart, MessageCircle, Calendar, FileText, Shield, Lock, UserX, Clock } from "lucide-react";
-import { Link } from "wouter";
+import QuickExitBar from "@/components/quick-exit-bar";
+import HeroSection from "@/components/hero-section";
+import HelpRequestForm from "@/components/help-request-form";
+import ResourceLibrary from "@/components/resource-library";
+import CommunityWall from "@/components/community-wall";
+import VolunteerSection from "@/components/volunteer-section";
+import ProfessionalNetwork from "@/components/professional-network";
+import EmergencySOS from "@/components/emergency-sos";
+import { useEffect } from "react";
 
 export default function Home() {
+  // Quick exit functionality
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        window.location.replace('https://www.google.com');
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   return (
-    <div className="min-h-screen">
-      {/* Hero Section */}
-      <section className="gradient-bg py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h1 className="text-4xl lg:text-5xl font-bold text-gray-900 mb-6">
-                You Are Not Alone.<br />
-                <span className="text-trust-blue">Healing Starts Here.</span>
-              </h1>
-              <p className="text-xl text-gray-700 mb-8 leading-relaxed">
-                A safe, confidential platform connecting abuse survivors with verified counselors,
-                supportive community, and essential resources for healing and rebuilding.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/chat">
-                  <Button className="bg-trust-blue hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg">
-                    <MessageCircle className="mr-2 h-5 w-5" />
-                    Get Help Now
-                  </Button>
-                </Link>
-                <Link href="/resources">
-                  <Button variant="outline" className="border-2 border-trust-blue text-trust-blue hover:bg-blue-50 px-8 py-4 rounded-lg font-semibold text-lg">
-                    <FileText className="mr-2 h-5 w-5" />
-                    Explore Resources
-                  </Button>
-                </Link>
+    <div className="min-h-screen bg-background">
+      <QuickExitBar />
+      
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b border-border">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                </svg>
               </div>
-              <div className="mt-8 flex items-center space-x-6 text-sm text-gray-600">
-                <div className="flex items-center">
-                  <Lock className="text-healing-green mr-2 h-4 w-4" />
-                  <span>End-to-End Encrypted</span>
-                </div>
-                <div className="flex items-center">
-                  <UserX className="text-healing-green mr-2 h-4 w-4" />
-                  <span>100% Anonymous</span>
-                </div>
-                <div className="flex items-center">
-                  <Clock className="text-healing-green mr-2 h-4 w-4" />
-                  <span>24/7 Available</span>
-                </div>
+              <div>
+                <h1 className="text-2xl font-bold text-primary">HealNet</h1>
+                <p className="text-xs text-muted-foreground">Safe Support for Survivors</p>
               </div>
             </div>
-            <div className="relative">
-              <img
-                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600"
-                alt="Peaceful counseling environment"
-                className="rounded-2xl shadow-2xl w-full h-auto"
-              />
-              <div className="absolute -bottom-6 -left-6 bg-white p-6 rounded-xl shadow-lg">
-                <div className="flex items-center space-x-3">
-                  <div className="w-3 h-3 bg-healing-green rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium text-gray-800">
-                    <span className="font-bold text-trust-blue">247</span> counselors online
-                  </span>
-                </div>
-              </div>
+            
+            <EmergencySOS />
+          </div>
+
+          {/* Navigation */}
+          <nav className="mt-6 border-t pt-4">
+            <div className="flex flex-wrap gap-6 text-sm">
+              <a href="#help" className="text-primary hover:text-primary/80 font-medium flex items-center space-x-1">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
+                </svg>
+                <span>Get Help</span>
+              </a>
+              <a href="#resources" className="text-foreground hover:text-primary flex items-center space-x-1">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
+                </svg>
+                <span>Resources</span>
+              </a>
+              <a href="#community" className="text-foreground hover:text-primary flex items-center space-x-1">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
+                </svg>
+                <span>Community</span>
+              </a>
+              <a href="#volunteer" className="text-foreground hover:text-primary flex items-center space-x-1">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                </svg>
+                <span>Volunteer</span>
+              </a>
             </div>
-          </div>
+          </nav>
         </div>
-      </section>
+      </header>
 
-      {/* Quick Help Section */}
-      <section id="help" className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Need Help Right Now?</h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              No registration required. Get immediate support through our anonymous help system.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <Card className="bg-gradient-to-br from-trust-blue to-blue-600 text-white border-0">
-              <CardContent className="p-8">
-                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mb-6">
-                  <MessageCircle className="text-2xl" />
-                </div>
-                <h3 className="text-xl font-semibold mb-4">Anonymous Chat</h3>
-                <p className="text-blue-100 mb-6">Connect instantly with trained volunteers for immediate support and guidance.</p>
-                <Link href="/chat">
-                  <Button className="bg-white text-trust-blue hover:bg-gray-50 w-full font-semibold">
-                    Start Chat Now
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-healing-green to-green-600 text-white border-0">
-              <CardContent className="p-8">
-                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mb-6">
-                  <Calendar className="text-2xl" />
-                </div>
-                <h3 className="text-xl font-semibold mb-4">Book Counselor</h3>
-                <p className="text-green-100 mb-6">Schedule sessions with licensed psychologists and trained counselors.</p>
-                <Link href="/volunteer">
-                  <Button className="bg-white text-healing-green hover:bg-gray-50 w-full font-semibold">
-                    Book Session
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-gradient-to-br from-warm-accent to-yellow-600 text-white border-0">
-              <CardContent className="p-8">
-                <div className="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center mb-6">
-                  <FileText className="text-2xl" />
-                </div>
-                <h3 className="text-xl font-semibold mb-4">Help Request</h3>
-                <p className="text-yellow-100 mb-6">Submit a confidential help request and get personalized support resources.</p>
-                <Button className="bg-white text-warm-accent hover:bg-gray-50 w-full font-semibold">
-                  Request Help
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Help Request Form */}
+      <HeroSection />
       <HelpRequestForm />
+      <ProfessionalNetwork />
+      <ResourceLibrary />
+      <CommunityWall />
+      <VolunteerSection />
 
-      {/* Safety Notice */}
-      <section className="py-12 bg-blue-50 border-t border-blue-200">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-trust-blue rounded-full flex items-center justify-center mx-auto mb-4">
-              <Shield className="text-white h-8 w-8" />
+      {/* Footer */}
+      <footer className="bg-foreground text-background py-12">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-8 mb-8">
+            <div>
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                  <svg className="w-4 h-4 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div>
+                  <h5 className="text-lg font-bold">HealNet</h5>
+                </div>
+              </div>
+              <p className="text-background/70 text-sm leading-relaxed">
+                A safe, confidential platform connecting abuse survivors with professional support and peer community.
+              </p>
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">Your Safety & Privacy</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
-              <Card className="bg-white">
-                <CardContent className="p-6">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
-                    <Lock className="text-trust-blue h-5 w-5" />
-                  </div>
-                  <h4 className="font-semibold text-gray-900 mb-2">End-to-End Encryption</h4>
-                  <p className="text-sm text-gray-600">All communications are encrypted and secure. No one can access your conversations.</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-white">
-                <CardContent className="p-6">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
-                    <UserX className="text-trust-blue h-5 w-5" />
-                  </div>
-                  <h4 className="font-semibold text-gray-900 mb-2">Complete Anonymity</h4>
-                  <p className="text-sm text-gray-600">Use the platform without providing personal information. Your identity stays protected.</p>
-                </CardContent>
-              </Card>
-              <Card className="bg-white">
-                <CardContent className="p-6">
-                  <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-3">
-                    <Shield className="text-trust-blue h-5 w-5" />
-                  </div>
-                  <h4 className="font-semibold text-gray-900 mb-2">No Data Tracking</h4>
-                  <p className="text-sm text-gray-600">We don't track your browsing or store unnecessary data. Your privacy is paramount.</p>
-                </CardContent>
-              </Card>
+
+            <div>
+              <h6 className="font-semibold text-background mb-4">Get Help</h6>
+              <ul className="space-y-2 text-sm text-background/70">
+                <li><a href="#" className="hover:text-background transition-colors">Anonymous Chat</a></li>
+                <li><a href="#" className="hover:text-background transition-colors">Crisis Support</a></li>
+                <li><a href="#" className="hover:text-background transition-colors">Schedule Session</a></li>
+                <li><a href="#" className="hover:text-background transition-colors">Safety Planning</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h6 className="font-semibold text-background mb-4">Resources</h6>
+              <ul className="space-y-2 text-sm text-background/70">
+                <li><a href="#" className="hover:text-background transition-colors">Healing Guides</a></li>
+                <li><a href="#" className="hover:text-background transition-colors">Legal Support</a></li>
+                <li><a href="#" className="hover:text-background transition-colors">Emergency Contacts</a></li>
+                <li><a href="#" className="hover:text-background transition-colors">Community Stories</a></li>
+              </ul>
+            </div>
+
+            <div>
+              <h6 className="font-semibold text-background mb-4">Privacy & Safety</h6>
+              <ul className="space-y-2 text-sm text-background/70">
+                <li><a href="#" className="hover:text-background transition-colors">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-background transition-colors">Safety Guidelines</a></li>
+                <li><a href="#" className="hover:text-background transition-colors">Terms of Service</a></li>
+                <li><a href="#" className="hover:text-background transition-colors">Report Concern</a></li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="border-t border-background/20 pt-8">
+            <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+              <div className="text-sm text-background/70">
+                © 2024 HealNet. All rights reserved. Your safety and privacy are our top priorities.
+              </div>
+              <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-2 text-sm text-background/70">
+                  <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                  </svg>
+                  <span>SSL Encrypted</span>
+                </div>
+                <div className="flex items-center space-x-2 text-sm text-background/70">
+                  <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>HIPAA Compliant</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </section>
+      </footer>
     </div>
   );
 }

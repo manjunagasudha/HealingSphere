@@ -3,56 +3,58 @@
 @tailwind utilities;
 
 :root {
-  --background: 249 250 251; /* #F9FAFB */
-  --foreground: 31 41 55; /* #1F2937 */
-  --muted: 243 244 246; /* #F3F4F6 */
-  --muted-foreground: 107 114 128; /* #6B7280 */
+  --background: 248 250 251; /* #F8FAFB */
+  --foreground: 45 55 72; /* #2D3748 */
+  --muted: 237 242 247; /* #EDF2F7 */
+  --muted-foreground: 74 85 104; /* #4A5568 */
   --popover: 255 255 255; /* #FFFFFF */
-  --popover-foreground: 31 41 55; /* #1F2937 */
+  --popover-foreground: 45 55 72; /* #2D3748 */
   --card: 255 255 255; /* #FFFFFF */
-  --card-foreground: 31 41 55; /* #1F2937 */
-  --border: 229 231 235; /* #E5E7EB */
-  --input: 229 231 235; /* #E5E7EB */
-  --primary: 37 99 235; /* #2563EB */
-  --primary-foreground: 248 250 252; /* #F8FAFC */
-  --secondary: 243 244 246; /* #F3F4F6 */
-  --secondary-foreground: 31 41 55; /* #1F2937 */
-  --accent: 243 244 246; /* #F3F4F6 */
-  --accent-foreground: 31 41 55; /* #1F2937 */
-  --destructive: 239 68 68; /* #EF4444 */
-  --destructive-foreground: 254 242 242; /* #FEF2F2 */
-  --ring: 37 99 235; /* #2563EB */
-  --radius: 0.5rem;
-  
+  --card-foreground: 45 55 72; /* #2D3748 */
+  --border: 226 232 240; /* #E2E8F0 */
+  --input: 226 232 240; /* #E2E8F0 */
+  --primary: 46 91 136; /* #2E5B88 */
+  --primary-foreground: 255 255 255; /* #FFFFFF */
+  --secondary: 104 179 168; /* #68B3A8 */
+  --secondary-foreground: 255 255 255; /* #FFFFFF */
+  --accent: 244 164 96; /* #F4A460 */
+  --accent-foreground: 255 255 255; /* #FFFFFF */
+  --destructive: 229 62 62; /* #E53E3E */
+  --destructive-foreground: 255 255 255; /* #FFFFFF */
+  --ring: 46 91 136; /* #2E5B88 */
+  --radius: 0.75rem;
+
   /* Custom HealNet colors */
-  --trust-blue: 37 99 235; /* #2563EB */
-  --healing-green: 16 185 129; /* #10B981 */
-  --warm-accent: 245 158 11; /* #F59E0B */
-  --emergency-red: 239 68 68; /* #EF4444 */
-  --soft-gray: 249 250 251; /* #F9FAFB */
-  --border-gray: 229 231 235; /* #E5E7EB */
+  --safety: 229 62 62; /* #E53E3E */
+  --success: 56 161 105; /* #38A169 */
+  --neutral-bg: 248 250 251; /* #F8FAFB */
 }
 
 .dark {
-  --background: 17 24 39; /* #111827 */
-  --foreground: 249 250 251; /* #F9FAFB */
-  --muted: 31 41 55; /* #1F2937 */
-  --muted-foreground: 156 163 175; /* #9CA3AF */
-  --popover: 17 24 39; /* #111827 */
-  --popover-foreground: 249 250 251; /* #F9FAFB */
-  --card: 31 41 55; /* #1F2937 */
-  --card-foreground: 249 250 251; /* #F9FAFB */
-  --border: 55 65 81; /* #374151 */
-  --input: 55 65 81; /* #374151 */
-  --primary: 37 99 235; /* #2563EB */
-  --primary-foreground: 248 250 252; /* #F8FAFC */
-  --secondary: 55 65 81; /* #374151 */
-  --secondary-foreground: 249 250 251; /* #F9FAFB */
-  --accent: 55 65 81; /* #374151 */
-  --accent-foreground: 249 250 251; /* #F9FAFB */
-  --destructive: 239 68 68; /* #EF4444 */
-  --destructive-foreground: 254 242 242; /* #FEF2F2 */
-  --ring: 37 99 235; /* #2563EB */
+  --background: 45 55 72; /* #2D3748 */
+  --foreground: 237 242 247; /* #EDF2F7 */
+  --muted: 74 85 104; /* #4A5568 */
+  --muted-foreground: 160 174 192; /* #A0AEC0 */
+  --popover: 45 55 72; /* #2D3748 */
+  --popover-foreground: 237 242 247; /* #EDF2F7 */
+  --card: 45 55 72; /* #2D3748 */
+  --card-foreground: 237 242 247; /* #EDF2F7 */
+  --border: 74 85 104; /* #4A5568 */
+  --input: 74 85 104; /* #4A5568 */
+  --primary: 46 91 136; /* #2E5B88 */
+  --primary-foreground: 255 255 255; /* #FFFFFF */
+  --secondary: 104 179 168; /* #68B3A8 */
+  --secondary-foreground: 255 255 255; /* #FFFFFF */
+  --accent: 244 164 96; /* #F4A460 */
+  --accent-foreground: 255 255 255; /* #FFFFFF */
+  --destructive: 229 62 62; /* #E53E3E */
+  --destructive-foreground: 255 255 255; /* #FFFFFF */
+  --ring: 104 179 168; /* #68B3A8 */
+
+  /* Custom HealNet colors for dark mode */
+  --safety: 229 62 62; /* #E53E3E */
+  --success: 56 161 105; /* #38A169 */
+  --neutral-bg: 45 55 72; /* #2D3748 */
 }
 
 @layer base {
@@ -61,80 +63,57 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    @apply bg-background text-foreground font-sans antialiased;
   }
 }
 
-@layer utilities {
-  .gradient-bg {
-    background: linear-gradient(135deg, hsl(var(--soft-gray)) 0%, hsl(206 100% 97%) 100%);
-  }
+/* Quick exit animations */
+.quick-exit-animate {
+  animation: quickExit 0.3s ease-out forwards;
+}
 
-  .trust-blue {
-    color: hsl(var(--trust-blue));
+@keyframes quickExit {
+  0% {
+    opacity: 1;
+    transform: scale(1);
   }
+  100% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
 
-  .bg-trust-blue {
-    background-color: hsl(var(--trust-blue));
-  }
+/* Safe browsing indicator */
+.safety-indicator {
+  background: linear-gradient(90deg, hsl(var(--safety)), hsl(var(--destructive)));
+}
 
-  .healing-green {
-    color: hsl(var(--healing-green));
-  }
+/* Emergency pulse animation */
+.emergency-pulse {
+  animation: emergencyPulse 2s infinite;
+}
 
-  .bg-healing-green {
-    background-color: hsl(var(--healing-green));
+@keyframes emergencyPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
   }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+}
 
-  .warm-accent {
-    color: hsl(var(--warm-accent));
-  }
+/* Chat bubble styles */
+.chat-bubble-user {
+  @apply bg-primary text-primary-foreground rounded-lg rounded-br-sm p-3 max-w-xs ml-auto;
+}
 
-  .bg-warm-accent {
-    background-color: hsl(var(--warm-accent));
-  }
+.chat-bubble-professional {
+  @apply bg-muted text-muted-foreground rounded-lg rounded-bl-sm p-3 max-w-xs mr-auto;
+}
 
-  .emergency-red {
-    color: hsl(var(--emergency-red));
-  }
-
-  .bg-emergency-red {
-    background-color: hsl(var(--emergency-red));
-  }
-
-  .soft-gray {
-    color: hsl(var(--soft-gray));
-  }
-
-  .bg-soft-gray {
-    background-color: hsl(var(--soft-gray));
-  }
-
-  .border-gray {
-    border-color: hsl(var(--border-gray));
-  }
-
-  .sos-pulse {
-    animation: sos-pulse 2s infinite;
-  }
-
-  @keyframes sos-pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-  }
-
-  .safe-exit {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1000;
-  }
-
-  .sos-button {
-    position: fixed;
-    bottom: 30px;
-    right: 30px;
-    z-index: 1000;
-  }
+/* Secure connection indicator */
+.secure-indicator {
+  background: linear-gradient(45deg, hsl(var(--success)), hsl(var(--secondary)));
 }

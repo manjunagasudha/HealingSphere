@@ -1,68 +1,60 @@
 import { 
-  users, 
-  volunteers, 
-  helpRequests, 
-  resources, 
-  stories, 
-  chatSessions, 
-  emergencyContacts,
-  type User, 
-  type InsertUser,
-  type Volunteer,
-  type InsertVolunteer,
-  type HelpRequest,
-  type InsertHelpRequest,
-  type Resource,
-  type InsertResource,
-  type Story,
-  type InsertStory,
-  type ChatSession,
-  type InsertChatSession,
-  type EmergencyContact,
-  type InsertEmergencyContact
+  users, professionals, volunteers, helpRequests, communityStories, 
+  resources, chatSessions, emergencyContacts,
+  type User, type InsertUser, type Professional, type InsertProfessional,
+  type Volunteer, type InsertVolunteer, type HelpRequest, type InsertHelpRequest,
+  type CommunityStory, type InsertCommunityStory, type Resource, type InsertResource,
+  type ChatSession, type InsertChatSession, type EmergencyContact
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 
 export interface IStorage {
-  // User methods
+  // Users
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
 
-  // Volunteer methods
-  createVolunteer(volunteer: Omit<InsertVolunteer, 'password'>): Promise<Volunteer>;
-  getVolunteers(): Promise<Volunteer[]>;
-  getVerifiedVolunteers(): Promise<Volunteer[]>;
-  verifyVolunteer(id: number): Promise<Volunteer>;
+  // Professionals
+  createProfessional(professional: InsertProfessional): Promise<Professional>;
+  getProfessionals(): Promise<Professional[]>;
+  getAvailableProfessionals(): Promise<Professional[]>;
+  updateProfessionalAvailability(id: number, availability: string): Promise<void>;
+  verifyProfessional(id: number): Promise<void>;
 
-  // Help Request methods
+  // Volunteers
+  createVolunteer(volunteer: InsertVolunteer): Promise<Volunteer>;
+  getVolunteers(): Promise<Volunteer[]>;
+  approveVolunteer(id: number): Promise<void>;
+
+  // Help Requests
   createHelpRequest(request: InsertHelpRequest): Promise<HelpRequest>;
   getHelpRequests(): Promise<HelpRequest[]>;
-  assignHelpRequest(id: number, volunteerId: number): Promise<HelpRequest>;
+  assignHelpRequest(id: number, professionalId: number): Promise<void>;
+  updateHelpRequestStatus(id: number, status: string): Promise<void>;
 
-  // Resource methods
-  getResources(category?: string): Promise<Resource[]>;
+  // Community Stories
+  createCommunityStory(story: InsertCommunityStory): Promise<CommunityStory>;
+  getApprovedStories(): Promise<CommunityStory[]>;
+  approveStory(id: number): Promise<void>;
+  incrementStorySupport(id: number): Promise<void>;
+
+  // Resources
   createResource(resource: InsertResource): Promise<Resource>;
+  getResourcesByCategory(category: string): Promise<Resource[]>;
+  getAllResources(): Promise<Resource[]>;
 
-  // Story methods
-  getApprovedStories(): Promise<Story[]>;
-  createStory(story: InsertStory): Promise<Story>;
-  incrementStorySupport(id: number): Promise<Story>;
-  approveStory(id: number): Promise<Story>;
-
-  // Chat Session methods
+  // Chat Sessions
   createChatSession(session: InsertChatSession): Promise<ChatSession>;
-  getActiveChatSessions(): Promise<ChatSession[]>;
-  endChatSession(sessionId: string): Promise<ChatSession>;
+  getChatSession(sessionId: string): Promise<ChatSession | undefined>;
+  endChatSession(sessionId: string): Promise<void>;
 
-  // Emergency Contact methods
-  getEmergencyContacts(region?: string, category?: string): Promise<EmergencyContact[]>;
-  createEmergencyContact(contact: InsertEmergencyContact): Promise<EmergencyContact>;
+  // Emergency Contacts
+  getEmergencyContacts(): Promise<EmergencyContact[]>;
 }
 
 export class DatabaseStorage implements IStorage {
-  // User methods
+  // Users
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user || undefined;
@@ -81,176 +73,152 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
-  // Volunteer methods
-  async createVolunteer(volunteer: Omit<InsertVolunteer, 'password'>): Promise<Volunteer> {
-    const [newVolunteer] = await db
+  // Professionals
+  async createProfessional(professional: InsertProfessional): Promise<Professional> {
+    const [result] = await db
+      .insert(professionals)
+      .values(professional)
+      .returning();
+    return result;
+  }
+
+  async getProfessionals(): Promise<Professional[]> {
+    return await db.select().from(professionals).where(eq(professionals.isVerified, true));
+  }
+
+  async getAvailableProfessionals(): Promise<Professional[]> {
+    return await db.select().from(professionals)
+      .where(and(eq(professionals.isVerified, true), eq(professionals.availability, "online")));
+  }
+
+  async updateProfessionalAvailability(id: number, availability: string): Promise<void> {
+    await db.update(professionals)
+      .set({ availability })
+      .where(eq(professionals.id, id));
+  }
+
+  async verifyProfessional(id: number): Promise<void> {
+    await db.update(professionals)
+      .set({ isVerified: true })
+      .where(eq(professionals.id, id));
+  }
+
+  // Volunteers
+  async createVolunteer(volunteer: InsertVolunteer): Promise<Volunteer> {
+    const [result] = await db
       .insert(volunteers)
       .values(volunteer)
       .returning();
-    return newVolunteer;
+    return result;
   }
 
   async getVolunteers(): Promise<Volunteer[]> {
-    return await db.select().from(volunteers).orderBy(desc(volunteers.createdAt));
+    return await db.select().from(volunteers).where(eq(volunteers.isApproved, true));
   }
 
-  async getVerifiedVolunteers(): Promise<Volunteer[]> {
-    return await db
-      .select()
-      .from(volunteers)
-      .where(eq(volunteers.isVerified, true))
-      .orderBy(desc(volunteers.createdAt));
+  async approveVolunteer(id: number): Promise<void> {
+    await db.update(volunteers)
+      .set({ isApproved: true })
+      .where(eq(volunteers.id, id));
   }
 
-  async verifyVolunteer(id: number): Promise<Volunteer> {
-    const [volunteer] = await db
-      .update(volunteers)
-      .set({ isVerified: true, isActive: true })
-      .where(eq(volunteers.id, id))
-      .returning();
-    return volunteer;
-  }
-
-  // Help Request methods
+  // Help Requests
   async createHelpRequest(request: InsertHelpRequest): Promise<HelpRequest> {
-    const [helpRequest] = await db
+    const [result] = await db
       .insert(helpRequests)
       .values(request)
       .returning();
-    return helpRequest;
+    return result;
   }
 
   async getHelpRequests(): Promise<HelpRequest[]> {
-    return await db
-      .select()
-      .from(helpRequests)
-      .orderBy(desc(helpRequests.createdAt));
+    return await db.select().from(helpRequests).orderBy(desc(helpRequests.createdAt));
   }
 
-  async assignHelpRequest(id: number, volunteerId: number): Promise<HelpRequest> {
-    const [helpRequest] = await db
-      .update(helpRequests)
-      .set({ 
-        assignedVolunteerId: volunteerId, 
-        status: "assigned",
-        respondedAt: new Date()
-      })
-      .where(eq(helpRequests.id, id))
+  async assignHelpRequest(id: number, professionalId: number): Promise<void> {
+    await db.update(helpRequests)
+      .set({ assignedTo: professionalId, status: "assigned" })
+      .where(eq(helpRequests.id, id));
+  }
+
+  async updateHelpRequestStatus(id: number, status: string): Promise<void> {
+    await db.update(helpRequests)
+      .set({ status })
+      .where(eq(helpRequests.id, id));
+  }
+
+  // Community Stories
+  async createCommunityStory(story: InsertCommunityStory): Promise<CommunityStory> {
+    const [result] = await db
+      .insert(communityStories)
+      .values(story)
       .returning();
-    return helpRequest;
+    return result;
   }
 
-  // Resource methods
-  async getResources(category?: string): Promise<Resource[]> {
-    const query = db.select().from(resources).where(eq(resources.isVerified, true));
-    
-    if (category) {
-      return await query.where(and(eq(resources.isVerified, true), eq(resources.category, category)));
+  async getApprovedStories(): Promise<CommunityStory[]> {
+    return await db.select().from(communityStories)
+      .where(eq(communityStories.isApproved, true))
+      .orderBy(desc(communityStories.createdAt));
+  }
+
+  async approveStory(id: number): Promise<void> {
+    await db.update(communityStories)
+      .set({ isApproved: true })
+      .where(eq(communityStories.id, id));
+  }
+
+  async incrementStorySupport(id: number): Promise<void> {
+    const [story] = await db.select().from(communityStories).where(eq(communityStories.id, id));
+    if (story) {
+      await db.update(communityStories)
+        .set({ supportCount: story.supportCount + 1 })
+        .where(eq(communityStories.id, id));
     }
-    
-    return await query.orderBy(desc(resources.createdAt));
   }
 
+  // Resources
   async createResource(resource: InsertResource): Promise<Resource> {
-    const [newResource] = await db
+    const [result] = await db
       .insert(resources)
       .values(resource)
       .returning();
-    return newResource;
+    return result;
   }
 
-  // Story methods
-  async getApprovedStories(): Promise<Story[]> {
-    return await db
-      .select()
-      .from(stories)
-      .where(eq(stories.isApproved, true))
-      .orderBy(desc(stories.createdAt));
+  async getResourcesByCategory(category: string): Promise<Resource[]> {
+    return await db.select().from(resources)
+      .where(and(eq(resources.category, category), eq(resources.isVerified, true)));
   }
 
-  async createStory(story: InsertStory): Promise<Story> {
-    const [newStory] = await db
-      .insert(stories)
-      .values(story)
-      .returning();
-    return newStory;
+  async getAllResources(): Promise<Resource[]> {
+    return await db.select().from(resources).where(eq(resources.isVerified, true));
   }
 
-  async incrementStorySupport(id: number): Promise<Story> {
-    const [story] = await db
-      .update(stories)
-      .set({ supportCount: (stories.supportCount + 1) })
-      .where(eq(stories.id, id))
-      .returning();
-    return story;
-  }
-
-  async approveStory(id: number): Promise<Story> {
-    const [story] = await db
-      .update(stories)
-      .set({ isApproved: true })
-      .where(eq(stories.id, id))
-      .returning();
-    return story;
-  }
-
-  // Chat Session methods
+  // Chat Sessions
   async createChatSession(session: InsertChatSession): Promise<ChatSession> {
-    const [chatSession] = await db
+    const [result] = await db
       .insert(chatSessions)
       .values(session)
       .returning();
-    return chatSession;
+    return result;
   }
 
-  async getActiveChatSessions(): Promise<ChatSession[]> {
-    return await db
-      .select()
-      .from(chatSessions)
-      .where(eq(chatSessions.isActive, true))
-      .orderBy(desc(chatSessions.createdAt));
+  async getChatSession(sessionId: string): Promise<ChatSession | undefined> {
+    const [session] = await db.select().from(chatSessions)
+      .where(eq(chatSessions.sessionId, sessionId));
+    return session || undefined;
   }
 
-  async endChatSession(sessionId: string): Promise<ChatSession> {
-    const [chatSession] = await db
-      .update(chatSessions)
-      .set({ isActive: false, endedAt: new Date() })
-      .where(eq(chatSessions.sessionId, sessionId))
-      .returning();
-    return chatSession;
+  async endChatSession(sessionId: string): Promise<void> {
+    await db.update(chatSessions)
+      .set({ isActive: false })
+      .where(eq(chatSessions.sessionId, sessionId));
   }
 
-  // Emergency Contact methods
-  async getEmergencyContacts(region?: string, category?: string): Promise<EmergencyContact[]> {
-    let query = db.select().from(emergencyContacts).where(eq(emergencyContacts.isActive, true));
-    
-    if (region && category) {
-      query = query.where(
-        and(
-          eq(emergencyContacts.isActive, true),
-          eq(emergencyContacts.region, region),
-          eq(emergencyContacts.category, category)
-        )
-      );
-    } else if (region) {
-      query = query.where(
-        and(eq(emergencyContacts.isActive, true), eq(emergencyContacts.region, region))
-      );
-    } else if (category) {
-      query = query.where(
-        and(eq(emergencyContacts.isActive, true), eq(emergencyContacts.category, category))
-      );
-    }
-    
-    return await query;
-  }
-
-  async createEmergencyContact(contact: InsertEmergencyContact): Promise<EmergencyContact> {
-    const [emergencyContact] = await db
-      .insert(emergencyContacts)
-      .values(contact)
-      .returning();
-    return emergencyContact;
+  // Emergency Contacts
+  async getEmergencyContacts(): Promise<EmergencyContact[]> {
+    return await db.select().from(emergencyContacts);
   }
 }
 
