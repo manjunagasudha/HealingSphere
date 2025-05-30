@@ -3,58 +3,58 @@
 @tailwind utilities;
 
 :root {
-  --background: 248 250 251; /* #F8FAFB */
+  --background: 249 251 250; /* #F9FBFA - Soft mint white */
   --foreground: 45 55 72; /* #2D3748 */
-  --muted: 237 242 247; /* #EDF2F7 */
+  --muted: 240 245 243; /* #F0F5F3 - Light sage */
   --muted-foreground: 74 85 104; /* #4A5568 */
   --popover: 255 255 255; /* #FFFFFF */
   --popover-foreground: 45 55 72; /* #2D3748 */
   --card: 255 255 255; /* #FFFFFF */
   --card-foreground: 45 55 72; /* #2D3748 */
-  --border: 226 232 240; /* #E2E8F0 */
-  --input: 226 232 240; /* #E2E8F0 */
-  --primary: 46 91 136; /* #2E5B88 */
+  --border: 220 230 225; /* #DCE6E1 - Soft green border */
+  --input: 220 230 225; /* #DCE6E1 */
+  --primary: 88 129 87; /* #58815D - Calming forest green */
   --primary-foreground: 255 255 255; /* #FFFFFF */
-  --secondary: 104 179 168; /* #68B3A8 */
+  --secondary: 126 158 148; /* #7E9E94 - Soft sage green */
   --secondary-foreground: 255 255 255; /* #FFFFFF */
-  --accent: 244 164 96; /* #F4A460 */
-  --accent-foreground: 255 255 255; /* #FFFFFF */
+  --accent: 158 188 218; /* #9EBCDA - Gentle blue */
+  --accent-foreground: 45 55 72; /* #2D3748 */
   --destructive: 229 62 62; /* #E53E3E */
   --destructive-foreground: 255 255 255; /* #FFFFFF */
-  --ring: 46 91 136; /* #2E5B88 */
+  --ring: 88 129 87; /* #58815D */
   --radius: 0.75rem;
 
   /* Custom HealNet colors */
   --safety: 229 62 62; /* #E53E3E */
-  --success: 56 161 105; /* #38A169 */
-  --neutral-bg: 248 250 251; /* #F8FAFB */
+  --success: 88 129 87; /* #58815D */
+  --neutral-bg: 249 251 250; /* #F9FBFA */
 }
 
 .dark {
-  --background: 45 55 72; /* #2D3748 */
+  --background: 32 42 53; /* #202A35 - Dark forest */
   --foreground: 237 242 247; /* #EDF2F7 */
-  --muted: 74 85 104; /* #4A5568 */
+  --muted: 54 69 79; /* #36454F */
   --muted-foreground: 160 174 192; /* #A0AEC0 */
-  --popover: 45 55 72; /* #2D3748 */
+  --popover: 32 42 53; /* #202A35 */
   --popover-foreground: 237 242 247; /* #EDF2F7 */
-  --card: 45 55 72; /* #2D3748 */
+  --card: 32 42 53; /* #202A35 */
   --card-foreground: 237 242 247; /* #EDF2F7 */
-  --border: 74 85 104; /* #4A5568 */
-  --input: 74 85 104; /* #4A5568 */
-  --primary: 46 91 136; /* #2E5B88 */
+  --border: 74 85 95; /* #4A555F */
+  --input: 74 85 95; /* #4A555F */
+  --primary: 118 169 117; /* #76A975 - Lighter forest green for dark mode */
   --primary-foreground: 255 255 255; /* #FFFFFF */
-  --secondary: 104 179 168; /* #68B3A8 */
+  --secondary: 146 178 168; /* #92B2A8 - Lighter sage green */
   --secondary-foreground: 255 255 255; /* #FFFFFF */
-  --accent: 244 164 96; /* #F4A460 */
+  --accent: 158 188 218; /* #9EBCDA - Gentle blue */
   --accent-foreground: 255 255 255; /* #FFFFFF */
   --destructive: 229 62 62; /* #E53E3E */
   --destructive-foreground: 255 255 255; /* #FFFFFF */
-  --ring: 104 179 168; /* #68B3A8 */
+  --ring: 118 169 117; /* #76A975 */
 
   /* Custom HealNet colors for dark mode */
   --safety: 229 62 62; /* #E53E3E */
-  --success: 56 161 105; /* #38A169 */
-  --neutral-bg: 45 55 72; /* #2D3748 */
+  --success: 118 169 117; /* #76A975 */
+  --neutral-bg: 32 42 53; /* #202A35 */
 }
 
 @layer base {
