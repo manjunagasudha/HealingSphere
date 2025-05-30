@@ -172,7 +172,7 @@ export class DatabaseStorage implements IStorage {
     const [story] = await db.select().from(communityStories).where(eq(communityStories.id, id));
     if (story) {
       await db.update(communityStories)
-        .set({ supportCount: story.supportCount + 1 })
+        .set({ supportCount: (story.supportCount || 0) + 1 })
         .where(eq(communityStories.id, id));
     }
   }

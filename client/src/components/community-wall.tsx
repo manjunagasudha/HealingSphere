@@ -11,6 +11,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { insertCommunityStorySchema, type InsertCommunityStory, type CommunityStory } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import { z } from "zod";
 
 export default function CommunityWall() {
   const { toast } = useToast();

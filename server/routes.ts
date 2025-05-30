@@ -38,6 +38,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         switch (message.type) {
           case 'join':
+            if (!message.sessionId) break;
             sessionId = message.sessionId;
             userType = message.userType || 'user';
             
