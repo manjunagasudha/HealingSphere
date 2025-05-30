@@ -1,12 +1,21 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import { storage } from "./storage";
 import { 
   insertProfessionalSchema, insertVolunteerSchema, insertHelpRequestSchema,
   insertCommunityStorySchema, insertResourceSchema, insertChatSessionSchema
 } from "@shared/schema";
 import { nanoid } from "nanoid";
+import { 
+  contentModerationMiddleware, 
+  sanitizeInputMiddleware, 
+  rateLimitMiddleware,
+  timeoutMiddleware,
+  supportCategoryMiddleware
+} from "./security";
 
 interface ChatMessage {
   id: string;
@@ -24,6 +33,37 @@ const activeChatSessions = new Map<string, {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
+
+  // Apply security middleware
+  app.use(helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        upgradeInsecureRequests: [],
+      },
+    },
+  }));
+
+  // General rate limiting
+  const generalLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100,
+    message: 'Too many requests from this IP, please try again later.',
+  });
+
+  // Strict rate limiting for sensitive endpoints
+  const strictLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 10,
+    message: 'Too many requests, please wait before trying again.',
+  });
+
+  app.use(generalLimiter);
+  app.use(sanitizeInputMiddleware);
+  app.use(timeoutMiddleware(30000));
 
   // WebSocket server for real-time chat
   const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
@@ -113,23 +153,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Help Requests
-  app.post("/api/help-requests", async (req, res) => {
+  // Help Requests - with content moderation and category detection
+  app.post("/api/help-requests", strictLimiter, contentModerationMiddleware, supportCategoryMiddleware, async (req, res) => {
     try {
       const validatedData = insertHelpRequestSchema.parse(req.body);
       const helpRequest = await storage.createHelpRequest(validatedData);
       
-      // Auto-assign to available professional if urgent
-      if (validatedData.urgency === 'immediate') {
+      // Enhanced routing based on detected category and priority
+      const category = req.body.detectedCategory || 'general';
+      const priority = req.body.priority || 'normal';
+      
+      // Auto-assign to available professional based on urgency and category
+      if (validatedData.urgency === 'immediate' || priority === 'urgent') {
         const availableProfessionals = await storage.getAvailableProfessionals();
         if (availableProfessionals.length > 0) {
-          await storage.assignHelpRequest(helpRequest.id, availableProfessionals[0].id);
+          // Prioritize professionals based on specialization
+          const matchedProfessional = availableProfessionals.find(prof => 
+            prof.specializations?.some(spec => 
+              spec.toLowerCase().includes(category) || 
+              (category === 'crisis' && spec.toLowerCase().includes('crisis')) ||
+              (category === 'relationship' && spec.toLowerCase().includes('family'))
+            )
+          ) || availableProfessionals[0];
+          
+          await storage.assignHelpRequest(helpRequest.id, matchedProfessional.id);
         }
       }
       
-      res.json(helpRequest);
+      // Provide appropriate response based on detected content
+      const response: any = { ...helpRequest };
+      
+      if (category === 'crisis') {
+        response.immediateResources = [
+          { name: 'National Suicide Prevention Lifeline', contact: '988' },
+          { name: 'Crisis Text Line', contact: 'Text HOME to 741741' }
+        ];
+      } else if (category === 'relationship') {
+        response.supportMessage = 'Relationship difficulties can be very painful. Our counselors are trained to help with relationship issues, breakups, and emotional healing.';
+        response.resources = [
+          { name: 'Relationship Support', description: 'Professional counseling for relationship issues' },
+          { name: 'Emotional Healing Resources', description: 'Tools for processing heartbreak and moving forward' }
+        ];
+      }
+      
+      res.json(response);
     } catch (error) {
-      res.status(400).json({ error: "Invalid help request data" });
+      res.status(400).json({ 
+        error: "Invalid help request data",
+        message: "Please check your submission and try again. If you need immediate help, use our emergency contacts."
+      });
     }
   });
 
@@ -191,14 +263,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Community Stories
-  app.post("/api/stories", async (req, res) => {
+  // Community Stories - with enhanced moderation
+  app.post("/api/stories", strictLimiter, contentModerationMiddleware, async (req, res) => {
     try {
       const validatedData = insertCommunityStorySchema.parse(req.body);
       const story = await storage.createCommunityStory(validatedData);
-      res.json(story);
+      
+      res.json({
+        ...story,
+        message: "Thank you for sharing your story. It will be reviewed by our moderation team within 24 hours before being published. Your courage in sharing helps others feel less alone.",
+        moderationInfo: {
+          reviewTime: "Stories are typically reviewed within 24 hours",
+          guidelines: "We ensure all shared content is supportive and safe for our community"
+        }
+      });
     } catch (error) {
-      res.status(400).json({ error: "Invalid story data" });
+      res.status(400).json({ 
+        error: "Story submission failed",
+        message: "Please review your content and try again. Remember, this is a safe space for sharing supportive experiences."
+      });
     }
   });
 
