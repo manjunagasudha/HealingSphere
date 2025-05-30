@@ -6,6 +6,8 @@ import CommunityWall from "@/components/community-wall";
 import VolunteerSection from "@/components/volunteer-section";
 import ProfessionalNetwork from "@/components/professional-network";
 import EmergencySOS from "@/components/emergency-sos";
+import RelationshipSupport from "@/components/relationship-support";
+import { SafetyMonitor } from "@/components/safety-monitor";
 import { useEffect } from "react";
 
 export default function Home() {
@@ -23,6 +25,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SafetyMonitor />
       <QuickExitBar />
       
       {/* Header */}
@@ -79,6 +82,7 @@ export default function Home() {
       <HeroSection />
       <HelpRequestForm />
       <ProfessionalNetwork />
+      <RelationshipSupport />
       <ResourceLibrary />
       <CommunityWall />
       <VolunteerSection />
