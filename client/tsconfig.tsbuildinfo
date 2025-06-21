@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/config.ts","./src/firebase.ts","./src/main.tsx","./src/vite-env.d.ts","./src/pages/chat.tsx","./src/pages/home.tsx","./src/pages/resources.tsx","./src/pages/stories.tsx"],"version":"5.8.3"}

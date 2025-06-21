@@ -3,10 +3,10 @@ import { useEffect, useState } from 'react';
 import { signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 import type { User } from 'firebase/auth';
 import { auth } from '@/firebase';
-import Home from '@/pages/Home.tsx';
-import Resources from '@/pages/Resources.tsx';
-import Chat from '@/pages/Chat.tsx';
-import Stories from '@/pages/Stories.tsx';
+import Home from '@/pages/Home';
+import Resources from '@/pages/Resources';
+import Chat from '@/pages/Chat';
+import Stories from '@/pages/Stories';
 
 function App() {
   const [user, setUser] = useState<User | null>(null);

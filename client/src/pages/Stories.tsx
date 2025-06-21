@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { getAuth } from 'firebase/auth';
-import { API_URL } from '../config';
 
 interface Story {
   id: string;
@@ -33,7 +32,7 @@ export default function Stories() {
   const fetchStories = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/api/stories`);
+      const response = await fetch('/api/stories');
       if (!response.ok) throw new Error('Failed to fetch stories');
       
       const data = await response.json();
@@ -51,7 +50,7 @@ export default function Stories() {
 
     try {
       const token = await user.getIdToken();
-      const response = await fetch(`${API_URL}/api/stories`, {
+      const response = await fetch('/api/stories', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
