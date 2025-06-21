@@ -1,119 +1,68 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 :root {
-  --background: 249 251 250; /* #F9FBFA - Soft mint white */
-  --foreground: 45 55 72; /* #2D3748 */
-  --muted: 240 245 243; /* #F0F5F3 - Light sage */
-  --muted-foreground: 74 85 104; /* #4A5568 */
-  --popover: 255 255 255; /* #FFFFFF */
-  --popover-foreground: 45 55 72; /* #2D3748 */
-  --card: 255 255 255; /* #FFFFFF */
-  --card-foreground: 45 55 72; /* #2D3748 */
-  --border: 220 230 225; /* #DCE6E1 - Soft green border */
-  --input: 220 230 225; /* #DCE6E1 */
-  --primary: 88 129 87; /* #58815D - Calming forest green */
-  --primary-foreground: 255 255 255; /* #FFFFFF */
-  --secondary: 126 158 148; /* #7E9E94 - Soft sage green */
-  --secondary-foreground: 255 255 255; /* #FFFFFF */
-  --accent: 158 188 218; /* #9EBCDA - Gentle blue */
-  --accent-foreground: 45 55 72; /* #2D3748 */
-  --destructive: 229 62 62; /* #E53E3E */
-  --destructive-foreground: 255 255 255; /* #FFFFFF */
-  --ring: 88 129 87; /* #58815D */
-  --radius: 0.75rem;
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
 
-  /* Custom HealNet colors */
-  --safety: 229 62 62; /* #E53E3E */
-  --success: 88 129 87; /* #58815D */
-  --neutral-bg: 249 251 250; /* #F9FBFA */
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #242424;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-.dark {
-  --background: 32 42 53; /* #202A35 - Dark forest */
-  --foreground: 237 242 247; /* #EDF2F7 */
-  --muted: 54 69 79; /* #36454F */
-  --muted-foreground: 160 174 192; /* #A0AEC0 */
-  --popover: 32 42 53; /* #202A35 */
-  --popover-foreground: 237 242 247; /* #EDF2F7 */
-  --card: 32 42 53; /* #202A35 */
-  --card-foreground: 237 242 247; /* #EDF2F7 */
-  --border: 74 85 95; /* #4A555F */
-  --input: 74 85 95; /* #4A555F */
-  --primary: 118 169 117; /* #76A975 - Lighter forest green for dark mode */
-  --primary-foreground: 255 255 255; /* #FFFFFF */
-  --secondary: 146 178 168; /* #92B2A8 - Lighter sage green */
-  --secondary-foreground: 255 255 255; /* #FFFFFF */
-  --accent: 158 188 218; /* #9EBCDA - Gentle blue */
-  --accent-foreground: 255 255 255; /* #FFFFFF */
-  --destructive: 229 62 62; /* #E53E3E */
-  --destructive-foreground: 255 255 255; /* #FFFFFF */
-  --ring: 118 169 117; /* #76A975 */
-
-  /* Custom HealNet colors for dark mode */
-  --safety: 229 62 62; /* #E53E3E */
-  --success: 118 169 117; /* #76A975 */
-  --neutral-bg: 32 42 53; /* #202A35 */
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+}
+a:hover {
+  color: #535bf2;
 }
 
-@layer base {
-  * {
-    @apply border-border;
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: #1a1a1a;
+  cursor: pointer;
+  transition: border-color 0.25s;
+}
+button:hover {
+  border-color: #646cff;
+}
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
   }
-
-  body {
-    @apply bg-background text-foreground font-sans antialiased;
+  a:hover {
+    color: #747bff;
   }
-}
-
-/* Quick exit animations */
-.quick-exit-animate {
-  animation: quickExit 0.3s ease-out forwards;
-}
-
-@keyframes quickExit {
-  0% {
-    opacity: 1;
-    transform: scale(1);
+  button {
+    background-color: #f9f9f9;
   }
-  100% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-}
-
-/* Safe browsing indicator */
-.safety-indicator {
-  background: linear-gradient(90deg, hsl(var(--safety)), hsl(var(--destructive)));
-}
-
-/* Emergency pulse animation */
-.emergency-pulse {
-  animation: emergencyPulse 2s infinite;
-}
-
-@keyframes emergencyPulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.8;
-  }
-}
-
-/* Chat bubble styles */
-.chat-bubble-user {
-  @apply bg-primary text-primary-foreground rounded-lg rounded-br-sm p-3 max-w-xs ml-auto;
-}
-
-.chat-bubble-professional {
-  @apply bg-muted text-muted-foreground rounded-lg rounded-bl-sm p-3 max-w-xs mr-auto;
-}
-
-/* Secure connection indicator */
-.secure-indicator {
-  background: linear-gradient(45deg, hsl(var(--success)), hsl(var(--secondary)));
 }

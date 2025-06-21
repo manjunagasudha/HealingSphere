@@ -1,225 +1,123 @@
-import { 
-  users, professionals, volunteers, helpRequests, communityStories, 
-  resources, chatSessions, emergencyContacts,
-  type User, type InsertUser, type Professional, type InsertProfessional,
-  type Volunteer, type InsertVolunteer, type HelpRequest, type InsertHelpRequest,
-  type CommunityStory, type InsertCommunityStory, type Resource, type InsertResource,
-  type ChatSession, type InsertChatSession, type EmergencyContact
-} from "@shared/schema";
-import { db } from "./db";
-import { eq, desc, and } from "drizzle-orm";
+// server/storage.ts
+import { nanoid } from 'nanoid';
 
-export interface IStorage {
-  // Users
-  getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-
-  // Professionals
-  createProfessional(professional: InsertProfessional): Promise<Professional>;
-  getProfessionals(): Promise<Professional[]>;
-  getAvailableProfessionals(): Promise<Professional[]>;
-  updateProfessionalAvailability(id: number, availability: string): Promise<void>;
-  verifyProfessional(id: number): Promise<void>;
-
-  // Volunteers
-  createVolunteer(volunteer: InsertVolunteer): Promise<Volunteer>;
-  getVolunteers(): Promise<Volunteer[]>;
-  approveVolunteer(id: number): Promise<void>;
-
-  // Help Requests
-  createHelpRequest(request: InsertHelpRequest): Promise<HelpRequest>;
-  getHelpRequests(): Promise<HelpRequest[]>;
-  assignHelpRequest(id: number, professionalId: number): Promise<void>;
-  updateHelpRequestStatus(id: number, status: string): Promise<void>;
-
-  // Community Stories
-  createCommunityStory(story: InsertCommunityStory): Promise<CommunityStory>;
-  getApprovedStories(): Promise<CommunityStory[]>;
-  approveStory(id: number): Promise<void>;
-  incrementStorySupport(id: number): Promise<void>;
-
-  // Resources
-  createResource(resource: InsertResource): Promise<Resource>;
-  getResourcesByCategory(category: string): Promise<Resource[]>;
-  getAllResources(): Promise<Resource[]>;
-
-  // Chat Sessions
-  createChatSession(session: InsertChatSession): Promise<ChatSession>;
-  getChatSession(sessionId: string): Promise<ChatSession | undefined>;
-  endChatSession(sessionId: string): Promise<void>;
-
-  // Emergency Contacts
-  getEmergencyContacts(): Promise<EmergencyContact[]>;
-}
-
-export class DatabaseStorage implements IStorage {
-  // Users
-  async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user || undefined;
+// Mock data for demo
+const mockResources = [
+  {
+    id: '1',
+    title: 'Creating a Safety Plan',
+    content: 'A comprehensive guide to developing a personalized safety plan for yourself and your family. Includes emergency contacts, escape routes, and important documents checklist.',
+    category: 'safety-planning',
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: '2',
+    title: 'Understanding Trauma Responses',
+    content: 'Learn about common trauma responses and how to recognize them. This resource helps you understand your reactions and develop healthy coping mechanisms.',
+    category: 'trauma-healing',
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: '3',
+    title: 'Legal Rights and Resources',
+    content: 'Information about your legal rights, how to file restraining orders, and access to free legal services for survivors of abuse.',
+    category: 'legal-support',
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: '4',
+    title: 'Rebuilding Self-Esteem',
+    content: 'Practical exercises and techniques to rebuild your self-esteem and confidence after experiencing abuse. Start your journey to self-love.',
+    category: 'rebuilding-life',
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: '5',
+    title: 'Emergency Contact List',
+    content: 'A curated list of emergency contacts including domestic violence shelters, legal aid organizations, and mental health crisis lines.',
+    category: 'safety-planning',
+    createdAt: new Date().toISOString()
   }
+];
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
-    return user || undefined;
+const mockEmergencyContacts = [
+  {
+    id: '1',
+    name: 'Emergency Services',
+    phone: '112',
+    description: 'General emergency number for immediate danger',
+    available24h: true
+  },
+  {
+    id: '2',
+    name: 'Domestic Violence Helpline',
+    phone: '1091',
+    description: 'Women helpline for domestic violence support',
+    available24h: true
+  },
+  {
+    id: '3',
+    name: 'Child Helpline',
+    phone: '1098',
+    description: 'Child protection services and support',
+    available24h: true
+  },
+  {
+    id: '4',
+    name: 'Mental Health Crisis',
+    phone: '988',
+    description: 'Suicide prevention and mental health crisis support',
+    available24h: true
   }
+];
 
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(insertUser)
-      .returning();
-    return user;
+const mockStories = [
+  {
+    id: '1',
+    content: 'After years of feeling trapped, I finally found the courage to leave. The support I received here helped me realize I wasn\'t alone. Today, I\'m rebuilding my life one day at a time.',
+    category: 'healing',
+    supportCount: 45,
+    createdAt: new Date().toISOString()
+  },
+  {
+    id: '2',
+    content: 'Creating a safety plan was the first step in my journey to freedom. This resource helped me understand that I had options and that help was available.',
+    category: 'safety',
+    supportCount: 32,
+    createdAt: new Date().toISOString()
   }
+];
 
-  // Professionals
-  async createProfessional(professional: InsertProfessional): Promise<Professional> {
-    const [result] = await db
-      .insert(professionals)
-      .values(professional)
-      .returning();
-    return result;
-  }
-
-  async getProfessionals(): Promise<Professional[]> {
-    return await db.select().from(professionals).where(eq(professionals.isVerified, true));
-  }
-
-  async getAvailableProfessionals(): Promise<Professional[]> {
-    return await db.select().from(professionals)
-      .where(and(eq(professionals.isVerified, true), eq(professionals.availability, "online")));
-  }
-
-  async updateProfessionalAvailability(id: number, availability: string): Promise<void> {
-    await db.update(professionals)
-      .set({ availability })
-      .where(eq(professionals.id, id));
-  }
-
-  async verifyProfessional(id: number): Promise<void> {
-    await db.update(professionals)
-      .set({ isVerified: true })
-      .where(eq(professionals.id, id));
-  }
-
-  // Volunteers
-  async createVolunteer(volunteer: InsertVolunteer): Promise<Volunteer> {
-    const [result] = await db
-      .insert(volunteers)
-      .values(volunteer)
-      .returning();
-    return result;
-  }
-
-  async getVolunteers(): Promise<Volunteer[]> {
-    return await db.select().from(volunteers).where(eq(volunteers.isApproved, true));
-  }
-
-  async approveVolunteer(id: number): Promise<void> {
-    await db.update(volunteers)
-      .set({ isApproved: true })
-      .where(eq(volunteers.id, id));
-  }
-
-  // Help Requests
-  async createHelpRequest(request: InsertHelpRequest): Promise<HelpRequest> {
-    const [result] = await db
-      .insert(helpRequests)
-      .values(request)
-      .returning();
-    return result;
-  }
-
-  async getHelpRequests(): Promise<HelpRequest[]> {
-    return await db.select().from(helpRequests).orderBy(desc(helpRequests.createdAt));
-  }
-
-  async assignHelpRequest(id: number, professionalId: number): Promise<void> {
-    await db.update(helpRequests)
-      .set({ assignedTo: professionalId, status: "assigned" })
-      .where(eq(helpRequests.id, id));
-  }
-
-  async updateHelpRequestStatus(id: number, status: string): Promise<void> {
-    await db.update(helpRequests)
-      .set({ status })
-      .where(eq(helpRequests.id, id));
-  }
-
-  // Community Stories
-  async createCommunityStory(story: InsertCommunityStory): Promise<CommunityStory> {
-    const [result] = await db
-      .insert(communityStories)
-      .values(story)
-      .returning();
-    return result;
-  }
-
-  async getApprovedStories(): Promise<CommunityStory[]> {
-    return await db.select().from(communityStories)
-      .where(eq(communityStories.isApproved, true))
-      .orderBy(desc(communityStories.createdAt));
-  }
-
-  async approveStory(id: number): Promise<void> {
-    await db.update(communityStories)
-      .set({ isApproved: true })
-      .where(eq(communityStories.id, id));
-  }
-
-  async incrementStorySupport(id: number): Promise<void> {
-    const [story] = await db.select().from(communityStories).where(eq(communityStories.id, id));
-    if (story) {
-      await db.update(communityStories)
-        .set({ supportCount: (story.supportCount || 0) + 1 })
-        .where(eq(communityStories.id, id));
-    }
-  }
-
-  // Resources
-  async createResource(resource: InsertResource): Promise<Resource> {
-    const [result] = await db
-      .insert(resources)
-      .values(resource)
-      .returning();
-    return result;
-  }
-
-  async getResourcesByCategory(category: string): Promise<Resource[]> {
-    return await db.select().from(resources)
-      .where(and(eq(resources.category, category), eq(resources.isVerified, true)));
-  }
-
-  async getAllResources(): Promise<Resource[]> {
-    return await db.select().from(resources).where(eq(resources.isVerified, true));
-  }
-
-  // Chat Sessions
-  async createChatSession(session: InsertChatSession): Promise<ChatSession> {
-    const [result] = await db
-      .insert(chatSessions)
-      .values(session)
-      .returning();
-    return result;
-  }
-
-  async getChatSession(sessionId: string): Promise<ChatSession | undefined> {
-    const [session] = await db.select().from(chatSessions)
-      .where(eq(chatSessions.sessionId, sessionId));
-    return session || undefined;
-  }
-
-  async endChatSession(sessionId: string): Promise<void> {
-    await db.update(chatSessions)
-      .set({ isActive: false })
-      .where(eq(chatSessions.sessionId, sessionId));
-  }
-
-  // Emergency Contacts
-  async getEmergencyContacts(): Promise<EmergencyContact[]> {
-    return await db.select().from(emergencyContacts);
-  }
-}
-
-export const storage = new DatabaseStorage();
+export const storage = {
+  createHelpRequest: async (data: any) => {
+    // Save to database logic here
+    return { id: nanoid(), ...data, createdAt: new Date().toISOString() };
+  },
+  getHelpRequests: async () => [],
+  getAvailableProfessionals: async () => [],
+  assignHelpRequest: async (requestId: string, professionalId: string) => {},
+  createProfessional: async (data: any) => data,
+  getProfessionals: async () => [],
+  createVolunteer: async (data: any) => data,
+  getVolunteers: async () => [],
+  createCommunityStory: async (data: any) => ({ 
+    id: nanoid(), 
+    ...data, 
+    supportCount: 0,
+    createdAt: new Date().toISOString() 
+  }),
+  getApprovedStories: async () => mockStories,
+  incrementStorySupport: async (id: number) => {},
+  getResourcesByCategory: async (category: string) => {
+    return mockResources.filter(resource => resource.category === category);
+  },
+  getAllResources: async () => mockResources,
+  createResource: async (data: any) => ({ 
+    id: nanoid(), 
+    ...data, 
+    createdAt: new Date().toISOString() 
+  }),
+  createChatSession: async (session: any) => session,
+  getEmergencyContacts: async () => mockEmergencyContacts,
+  endChatSession: async (sessionId: string) => {}
+};

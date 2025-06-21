@@ -1,21 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { WebSocketServer, WebSocket } from "ws";
-import helmet from "helmet";
-import rateLimit from "express-rate-limit";
+import { WebSocketServer, WebSocket, type RawData } from "ws";
 import { storage } from "./storage";
-import { 
-  insertProfessionalSchema, insertVolunteerSchema, insertHelpRequestSchema,
-  insertCommunityStorySchema, insertResourceSchema, insertChatSessionSchema
-} from "@shared/schema";
 import { nanoid } from "nanoid";
-import { 
-  contentModerationMiddleware, 
-  sanitizeInputMiddleware, 
-  rateLimitMiddleware,
-  timeoutMiddleware,
-  supportCategoryMiddleware
-} from "./security";
+import { authenticateToken, type AuthenticatedRequest } from "./middleware/auth";
 
 interface ChatMessage {
   id: string;
@@ -31,57 +19,125 @@ const activeChatSessions = new Map<string, {
   messages: ChatMessage[];
 }>();
 
-export async function registerRoutes(app: Express): Promise<Server> {
+export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
+  const wss = new WebSocketServer({ server: httpServer, path: "/ws" });
 
-  // Apply security middleware
-  app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        scriptSrc: ["'self'"],
-        objectSrc: ["'none'"],
-        upgradeInsecureRequests: [],
-      },
-    },
-  }));
-
-  // General rate limiting
-  const generalLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100,
-    message: 'Too many requests from this IP, please try again later.',
+  // REST API Routes
+  app.get('/api/health', (req, res) => {
+    res.json({ message: 'HealNet Backend is running!' });
   });
 
-  // Strict rate limiting for sensitive endpoints
-  const strictLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 10,
-    message: 'Too many requests, please wait before trying again.',
+  // Resource Hub APIs
+  app.get('/api/resources', async (req, res) => {
+    try {
+      const category = req.query.category as string;
+      const resources = category 
+        ? await storage.getResourcesByCategory(category)
+        : await storage.getAllResources();
+      res.json(resources);
+    } catch (error) {
+      console.error('Error fetching resources:', error);
+      res.status(500).json({ error: 'Failed to fetch resources' });
+    }
   });
 
-  app.use(generalLimiter);
-  app.use(sanitizeInputMiddleware);
-  app.use(timeoutMiddleware(30000));
+  app.post('/api/resources', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { title, content, category } = req.body;
+      if (!title || !content || !category) {
+        return res.status(400).json({ error: 'Title, content, and category are required' });
+      }
+      
+      const newResource = await storage.createResource({
+        title,
+        content,
+        category,
+        createdBy: req.user?.uid
+      });
+      
+      res.status(201).json(newResource);
+    } catch (error) {
+      console.error('Error creating resource:', error);
+      res.status(500).json({ error: 'Failed to create resource' });
+    }
+  });
 
-  // WebSocket server for real-time chat
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  // Emergency Help APIs
+  app.get('/api/emergency-contacts', async (req, res) => {
+    try {
+      const contacts = await storage.getEmergencyContacts();
+      res.json(contacts);
+    } catch (error) {
+      console.error('Error fetching emergency contacts:', error);
+      res.status(500).json({ error: 'Failed to fetch emergency contacts' });
+    }
+  });
 
-  wss.on('connection', (ws) => {
+  app.post('/api/emergency', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { message, urgency, contactMethod } = req.body;
+      const helpRequest = await storage.createHelpRequest({
+        message,
+        urgency: urgency || 'high',
+        contactMethod: contactMethod || 'anonymous',
+        userId: req.user?.uid
+      });
+      
+      res.status(201).json(helpRequest);
+    } catch (error) {
+      console.error('Error creating emergency request:', error);
+      res.status(500).json({ error: 'Failed to create emergency request' });
+    }
+  });
+
+  // Community Stories APIs
+  app.get('/api/stories', async (req, res) => {
+    try {
+      const stories = await storage.getApprovedStories();
+      res.json(stories);
+    } catch (error) {
+      console.error('Error fetching stories:', error);
+      res.status(500).json({ error: 'Failed to fetch stories' });
+    }
+  });
+
+  app.post('/api/stories', authenticateToken, async (req: AuthenticatedRequest, res) => {
+    try {
+      const { content, category } = req.body;
+      if (!content) {
+        return res.status(400).json({ error: 'Content is required' });
+      }
+      
+      const story = await storage.createCommunityStory({
+        content,
+        category: category || 'general',
+        authorId: req.user?.uid
+      });
+      
+      res.status(201).json(story);
+    } catch (error) {
+      console.error('Error creating story:', error);
+      res.status(500).json({ error: 'Failed to create story' });
+    }
+  });
+
+  // WebSocket Chat Logic
+  wss.on("connection", (ws: WebSocket) => {
     let sessionId: string | null = null;
     let userType: 'user' | 'professional' | 'volunteer' = 'user';
 
-    ws.on('message', async (data) => {
+    ws.on("message", async (data: RawData) => {
       try {
         const message = JSON.parse(data.toString());
 
         switch (message.type) {
-          case 'join':
-            if (!message.sessionId) break;
-            sessionId = message.sessionId;
+          case "join":
+            sessionId = message.sessionId ?? null;
             userType = message.userType || 'user';
-            
+
+            if (!sessionId) return;
+
             if (!activeChatSessions.has(sessionId)) {
               activeChatSessions.set(sessionId, {
                 userSocket: null,
@@ -91,57 +147,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
 
             const session = activeChatSessions.get(sessionId)!;
+
             if (userType === 'user') {
               session.userSocket = ws;
             } else {
               session.professionalSocket = ws;
             }
 
-            // Send chat history
             ws.send(JSON.stringify({
               type: 'history',
               messages: session.messages
             }));
             break;
 
-          case 'message':
-            if (sessionId && activeChatSessions.has(sessionId)) {
-              const chatMessage: ChatMessage = {
-                id: nanoid(),
-                sessionId,
-                message: message.content,
-                timestamp: Date.now(),
-                sender: userType
-              };
+          case "message":
+            if (!sessionId || !activeChatSessions.has(sessionId)) return;
 
-              const session = activeChatSessions.get(sessionId)!;
-              session.messages.push(chatMessage);
+            const newMessage: ChatMessage = {
+              id: nanoid(),
+              sessionId: sessionId,
+              message: message.content,
+              timestamp: Date.now(),
+              sender: userType
+            };
 
-              // Broadcast to both participants
-              [session.userSocket, session.professionalSocket].forEach(socket => {
-                if (socket && socket.readyState === WebSocket.OPEN) {
-                  socket.send(JSON.stringify({
-                    type: 'message',
-                    message: chatMessage
-                  }));
-                }
-              });
-            }
+            const currentSession = activeChatSessions.get(sessionId)!;
+            currentSession.messages.push(newMessage);
+
+            [currentSession.userSocket, currentSession.professionalSocket].forEach(socket => {
+              if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                  type: 'message',
+                  message: newMessage
+                }));
+              }
+            });
             break;
 
-          case 'end':
-            if (sessionId) {
-              await storage.endChatSession(sessionId);
-              activeChatSessions.delete(sessionId);
-            }
+          case "end":
+            if (!sessionId) return;
+            await storage.endChatSession(sessionId);
+            activeChatSessions.delete(sessionId);
             break;
         }
-      } catch (error) {
-        console.error('WebSocket message error:', error);
+      } catch (err) {
+        console.error("WebSocket Error:", err);
       }
     });
 
-    ws.on('close', () => {
+    ws.on("close", () => {
       if (sessionId && activeChatSessions.has(sessionId)) {
         const session = activeChatSessions.get(sessionId)!;
         if (session.userSocket === ws) {
@@ -153,205 +207,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Help Requests - with content moderation and category detection
-  app.post("/api/help-requests", strictLimiter, contentModerationMiddleware, supportCategoryMiddleware, async (req, res) => {
-    try {
-      const validatedData = insertHelpRequestSchema.parse(req.body);
-      const helpRequest = await storage.createHelpRequest(validatedData);
-      
-      // Enhanced routing based on detected category and priority
-      const category = req.body.detectedCategory || 'general';
-      const priority = req.body.priority || 'normal';
-      
-      // Auto-assign to available professional based on urgency and category
-      if (validatedData.urgency === 'immediate' || priority === 'urgent') {
-        const availableProfessionals = await storage.getAvailableProfessionals();
-        if (availableProfessionals.length > 0) {
-          // Prioritize professionals based on specialization
-          const matchedProfessional = availableProfessionals.find(prof => 
-            prof.specializations?.some(spec => 
-              spec.toLowerCase().includes(category) || 
-              (category === 'crisis' && spec.toLowerCase().includes('crisis')) ||
-              (category === 'relationship' && spec.toLowerCase().includes('family'))
-            )
-          ) || availableProfessionals[0];
-          
-          await storage.assignHelpRequest(helpRequest.id, matchedProfessional.id);
-        }
-      }
-      
-      // Provide appropriate response based on detected content
-      const response: any = { ...helpRequest };
-      
-      if (category === 'crisis') {
-        response.immediateResources = [
-          { name: 'National Suicide Prevention Lifeline', contact: '988' },
-          { name: 'Crisis Text Line', contact: 'Text HOME to 741741' }
-        ];
-      } else if (category === 'relationship') {
-        response.supportMessage = 'Relationship difficulties can be very painful. Our counselors are trained to help with relationship issues, breakups, and emotional healing.';
-        response.resources = [
-          { name: 'Relationship Support', description: 'Professional counseling for relationship issues' },
-          { name: 'Emotional Healing Resources', description: 'Tools for processing heartbreak and moving forward' }
-        ];
-      }
-      
-      res.json(response);
-    } catch (error) {
-      res.status(400).json({ 
-        error: "Invalid help request data",
-        message: "Please check your submission and try again. If you need immediate help, use our emergency contacts."
-      });
-    }
-  });
-
-  app.get("/api/help-requests", async (req, res) => {
-    try {
-      const requests = await storage.getHelpRequests();
-      res.json(requests);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch help requests" });
-    }
-  });
-
-  // Professionals
-  app.post("/api/professionals", async (req, res) => {
-    try {
-      const validatedData = insertProfessionalSchema.parse(req.body);
-      const professional = await storage.createProfessional(validatedData);
-      res.json(professional);
-    } catch (error) {
-      res.status(400).json({ error: "Invalid professional data" });
-    }
-  });
-
-  app.get("/api/professionals", async (req, res) => {
-    try {
-      const professionals = await storage.getProfessionals();
-      res.json(professionals);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch professionals" });
-    }
-  });
-
-  app.get("/api/professionals/available", async (req, res) => {
-    try {
-      const professionals = await storage.getAvailableProfessionals();
-      res.json(professionals);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch available professionals" });
-    }
-  });
-
-  // Volunteers
-  app.post("/api/volunteers", async (req, res) => {
-    try {
-      const validatedData = insertVolunteerSchema.parse(req.body);
-      const volunteer = await storage.createVolunteer(validatedData);
-      res.json(volunteer);
-    } catch (error) {
-      res.status(400).json({ error: "Invalid volunteer data" });
-    }
-  });
-
-  app.get("/api/volunteers", async (req, res) => {
-    try {
-      const volunteers = await storage.getVolunteers();
-      res.json(volunteers);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch volunteers" });
-    }
-  });
-
-  // Community Stories - with enhanced moderation
-  app.post("/api/stories", strictLimiter, contentModerationMiddleware, async (req, res) => {
-    try {
-      const validatedData = insertCommunityStorySchema.parse(req.body);
-      const story = await storage.createCommunityStory(validatedData);
-      
-      res.json({
-        ...story,
-        message: "Thank you for sharing your story. It will be reviewed by our moderation team within 24 hours before being published. Your courage in sharing helps others feel less alone.",
-        moderationInfo: {
-          reviewTime: "Stories are typically reviewed within 24 hours",
-          guidelines: "We ensure all shared content is supportive and safe for our community"
-        }
-      });
-    } catch (error) {
-      res.status(400).json({ 
-        error: "Story submission failed",
-        message: "Please review your content and try again. Remember, this is a safe space for sharing supportive experiences."
-      });
-    }
-  });
-
-  app.get("/api/stories", async (req, res) => {
-    try {
-      const stories = await storage.getApprovedStories();
-      res.json(stories);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch stories" });
-    }
-  });
-
-  app.post("/api/stories/:id/support", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      await storage.incrementStorySupport(id);
-      res.json({ success: true });
-    } catch (error) {
-      res.status(400).json({ error: "Failed to support story" });
-    }
-  });
-
-  // Resources
-  app.get("/api/resources", async (req, res) => {
-    try {
-      const category = req.query.category as string;
-      const resources = category 
-        ? await storage.getResourcesByCategory(category)
-        : await storage.getAllResources();
-      res.json(resources);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch resources" });
-    }
-  });
-
-  // Chat Sessions
-  app.post("/api/chat/start", async (req, res) => {
-    try {
-      const sessionId = nanoid();
-      const { professionalId, volunteerId } = req.body;
-      
-      const sessionData = {
-        sessionId,
-        professionalId: professionalId || null,
-        volunteerId: volunteerId || null
-      };
-
-      const session = await storage.createChatSession(sessionData);
-      
-      activeChatSessions.set(sessionId, {
-        userSocket: null,
-        professionalSocket: null,
-        messages: []
-      });
-
-      res.json({ sessionId: session.sessionId });
-    } catch (error) {
-      res.status(400).json({ error: "Failed to start chat session" });
-    }
-  });
-
-  // Emergency Contacts
-  app.get("/api/emergency-contacts", async (req, res) => {
-    try {
-      const contacts = await storage.getEmergencyContacts();
-      res.json(contacts);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch emergency contacts" });
-    }
-  });
-
   return httpServer;
 }
+
+

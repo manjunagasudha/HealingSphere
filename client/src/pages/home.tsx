@@ -1,166 +1,155 @@
-import QuickExitBar from "@/components/quick-exit-bar";
-import HeroSection from "@/components/hero-section";
-import HelpRequestForm from "@/components/help-request-form";
-import ResourceLibrary from "@/components/resource-library";
-import CommunityWall from "@/components/community-wall";
-import VolunteerSection from "@/components/volunteer-section";
-import ProfessionalNetwork from "@/components/professional-network";
-import EmergencySOS from "@/components/emergency-sos";
-import RelationshipSupport from "@/components/relationship-support";
-import { SafetyMonitor } from "@/components/safety-monitor";
-import { useEffect } from "react";
+import { useState } from 'react';
+import { getAuth } from 'firebase/auth';
 
 export default function Home() {
-  // Quick exit functionality
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        window.location.replace('https://www.google.com');
-      }
-    };
+  const [showEmergencyModal, setShowEmergencyModal] = useState(false);
+  const auth = getAuth();
+  const user = auth.currentUser;
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  const handleEmergencyClick = () => {
+    setShowEmergencyModal(true);
+  };
+
+  const emergencyContacts = [
+    { name: 'Emergency Services', number: '112', description: 'General emergency number' },
+    { name: 'Domestic Violence Helpline', number: '1091', description: 'Women helpline' },
+    { name: 'Child Helpline', number: '1098', description: 'Child protection services' },
+    { name: 'Mental Health Crisis', number: '988', description: 'Suicide prevention lifeline' }
+  ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <SafetyMonitor />
-      <QuickExitBar />
-      
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b border-border">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-primary">HealNet</h1>
-                <p className="text-xs text-muted-foreground">Safe Support for Survivors</p>
-              </div>
-            </div>
-            
-            <EmergencySOS />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Emergency Button */}
+      <div className="fixed top-4 right-4 z-50">
+        <button
+          onClick={handleEmergencyClick}
+          className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-full shadow-lg transform hover:scale-105 transition-all duration-200 font-semibold text-lg"
+        >
+          🆘 EMERGENCY
+        </button>
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto px-4 py-12">
+        <div className="text-center mb-12">
+          <h1 className="text-5xl font-bold text-gray-900 mb-4">
+            Welcome to <span className="text-blue-600">HealNet</span>
+          </h1>
+          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            A safe, anonymous platform designed to support abuse survivors on their healing journey. 
+            You're not alone, and help is always available.
+          </p>
+        </div>
+
+        {/* Welcome Message */}
+        {user && (
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+              Welcome, Anonymous User
+            </h2>
+            <p className="text-gray-600">
+              Your session is secure and anonymous. Your UID: <code className="bg-gray-100 px-2 py-1 rounded text-sm">{user.uid}</code>
+            </p>
+          </div>
+        )}
+
+        {/* Feature Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+          <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div className="text-4xl mb-4">💬</div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Counselor Chat</h3>
+            <p className="text-gray-600 mb-4">
+              Connect with trained professionals and volunteers for real-time support and guidance.
+            </p>
+            <a 
+              href="/chat" 
+              className="inline-block bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Start Chat
+            </a>
           </div>
 
-          {/* Navigation */}
-          <nav className="mt-6 border-t pt-4">
-            <div className="flex flex-wrap gap-6 text-sm">
-              <a href="#help" className="text-primary hover:text-primary/80 font-medium flex items-center space-x-1">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z" />
-                </svg>
-                <span>Get Help</span>
-              </a>
-              <a href="#resources" className="text-foreground hover:text-primary flex items-center space-x-1">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
-                </svg>
-                <span>Resources</span>
-              </a>
-              <a href="#community" className="text-foreground hover:text-primary flex items-center space-x-1">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z" />
-                </svg>
-                <span>Community</span>
-              </a>
-              <a href="#volunteer" className="text-foreground hover:text-primary flex items-center space-x-1">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                </svg>
-                <span>Volunteer</span>
-              </a>
-            </div>
-          </nav>
+          <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div className="text-4xl mb-4">📚</div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Resource Hub</h3>
+            <p className="text-gray-600 mb-4">
+              Access curated resources for safety planning, trauma healing, legal support, and rebuilding your life.
+            </p>
+            <a 
+              href="/resources" 
+              className="inline-block bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Browse Resources
+            </a>
+          </div>
+
+          <div className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+            <div className="text-4xl mb-4">🤝</div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Community Stories</h3>
+            <p className="text-gray-600 mb-4">
+              Read and share healing stories from others who have walked similar paths.
+            </p>
+            <a 
+              href="/stories" 
+              className="inline-block bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              View Stories
+            </a>
+          </div>
         </div>
-      </header>
 
-      <HeroSection />
-      <HelpRequestForm />
-      <ProfessionalNetwork />
-      <RelationshipSupport />
-      <ResourceLibrary />
-      <CommunityWall />
-      <VolunteerSection />
+        {/* Safety Information */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-yellow-800 mb-2">Safety First</h3>
+          <p className="text-yellow-700 mb-4">
+            If you're in immediate danger, please call emergency services immediately. 
+            This platform is designed for support and guidance, not emergency response.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <span className="bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full text-sm">
+              Emergency: 112
+            </span>
+            <span className="bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full text-sm">
+              Women Helpline: 1091
+            </span>
+            <span className="bg-yellow-200 text-yellow-800 px-3 py-1 rounded-full text-sm">
+              Child Helpline: 1098
+            </span>
+          </div>
+        </div>
+      </div>
 
-      {/* Footer */}
-      <footer className="bg-foreground text-background py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-8 mb-8">
-            <div>
-              <div className="flex items-center space-x-3 mb-4">
-                <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                  <svg className="w-4 h-4 text-primary-foreground" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div>
-                  <h5 className="text-lg font-bold">HealNet</h5>
-                </div>
-              </div>
-              <p className="text-background/70 text-sm leading-relaxed">
-                A safe, confidential platform connecting abuse survivors with professional support and peer community.
+      {/* Emergency Modal */}
+      {showEmergencyModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6">
+            <div className="text-center">
+              <div className="text-6xl mb-4">🚨</div>
+              <h3 className="text-xl font-bold text-red-600 mb-4">Emergency Help</h3>
+              <p className="text-gray-700 mb-6">
+                If you're in immediate danger, please call emergency services right away.
               </p>
-            </div>
-
-            <div>
-              <h6 className="font-semibold text-background mb-4">Get Help</h6>
-              <ul className="space-y-2 text-sm text-background/70">
-                <li><a href="#" className="hover:text-background transition-colors">Anonymous Chat</a></li>
-                <li><a href="#" className="hover:text-background transition-colors">Crisis Support</a></li>
-                <li><a href="#" className="hover:text-background transition-colors">Schedule Session</a></li>
-                <li><a href="#" className="hover:text-background transition-colors">Safety Planning</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h6 className="font-semibold text-background mb-4">Resources</h6>
-              <ul className="space-y-2 text-sm text-background/70">
-                <li><a href="#" className="hover:text-background transition-colors">Healing Guides</a></li>
-                <li><a href="#" className="hover:text-background transition-colors">Legal Support</a></li>
-                <li><a href="#" className="hover:text-background transition-colors">Emergency Contacts</a></li>
-                <li><a href="#" className="hover:text-background transition-colors">Community Stories</a></li>
-              </ul>
-            </div>
-
-            <div>
-              <h6 className="font-semibold text-background mb-4">Privacy & Safety</h6>
-              <ul className="space-y-2 text-sm text-background/70">
-                <li><a href="#" className="hover:text-background transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-background transition-colors">Safety Guidelines</a></li>
-                <li><a href="#" className="hover:text-background transition-colors">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-background transition-colors">Report Concern</a></li>
-              </ul>
-            </div>
-          </div>
-
-          <div className="border-t border-background/20 pt-8">
-            <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-              <div className="text-sm text-background/70">
-                © 2024 HealNet. All rights reserved. Your safety and privacy are our top priorities.
+              
+              <div className="space-y-3 mb-6">
+                {emergencyContacts.map((contact, index) => (
+                  <div key={index} className="bg-gray-50 p-3 rounded-lg">
+                    <div className="font-semibold text-gray-900">{contact.name}</div>
+                    <div className="text-lg font-bold text-red-600">{contact.number}</div>
+                    <div className="text-sm text-gray-600">{contact.description}</div>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center space-x-6">
-                <div className="flex items-center space-x-2 text-sm text-background/70">
-                  <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                  </svg>
-                  <span>SSL Encrypted</span>
-                </div>
-                <div className="flex items-center space-x-2 text-sm text-background/70">
-                  <svg className="w-4 h-4 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  <span>HIPAA Compliant</span>
-                </div>
-              </div>
+              
+              <button
+                onClick={() => setShowEmergencyModal(false)}
+                className="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
-      </footer>
+      )}
     </div>
   );
-}
+} 

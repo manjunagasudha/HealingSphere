@@ -1,167 +1,234 @@
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
-import { Shield, Brain, Scale, Sprout, Phone, ArrowLeft, BookOpen } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useEffect } from 'react';
+import { getAuth } from 'firebase/auth';
+import { API_URL } from '../config';
+
+interface Resource {
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  createdAt?: string;
+}
 
 export default function Resources() {
-  const { data: resources = [] } = useQuery({
-    queryKey: ["/api/resources"],
+  const [resources, setResources] = useState<Resource[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newResource, setNewResource] = useState({
+    title: '',
+    content: '',
+    category: 'safety-planning'
   });
 
-  const resourceCategories = [
-    {
-      icon: Shield,
-      title: "Safety Planning",
-      description: "Create personalized safety plans and learn protective strategies.",
-      color: "bg-primary/10 text-primary",
-      category: "safety"
-    },
-    {
-      icon: Brain,
-      title: "Trauma & Healing",
-      description: "Understanding trauma responses and evidence-based healing approaches.",
-      color: "bg-secondary/10 text-secondary",
-      category: "trauma"
-    },
-    {
-      icon: Scale,
-      title: "Legal Support",
-      description: "Know your rights and access legal resources and referrals.",
-      color: "bg-accent/10 text-accent",
-      category: "legal"
-    },
-    {
-      icon: Sprout,
-      title: "Rebuilding Life",
-      description: "Tools for rebuilding confidence, relationships, and purpose.",
-      color: "bg-success/10 text-success",
-      category: "rebuilding"
-    }
+  const auth = getAuth();
+  const user = auth.currentUser;
+
+  const categories = [
+    { value: 'all', label: 'All Resources' },
+    { value: 'safety-planning', label: 'Safety Planning' },
+    { value: 'trauma-healing', label: 'Trauma Healing' },
+    { value: 'legal-support', label: 'Legal Support' },
+    { value: 'rebuilding-life', label: 'Rebuilding Life' }
   ];
 
+  const fetchResources = async (category?: string) => {
+    try {
+      setLoading(true);
+      const url = category && category !== 'all' 
+        ? `${API_URL}/api/resources?category=${category}`
+        : `${API_URL}/api/resources`;
+      
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch resources');
+      
+      const data = await response.json();
+      setResources(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch resources');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addResource = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!user) return;
+
+    try {
+      const token = await user.getIdToken();
+      const response = await fetch(`${API_URL}/api/resources`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(newResource)
+      });
+
+      if (!response.ok) throw new Error('Failed to create resource');
+
+      // Reset form and refresh resources
+      setNewResource({ title: '', content: '', category: 'safety-planning' });
+      setShowAddForm(false);
+      fetchResources(selectedCategory);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create resource');
+    }
+  };
+
+  useEffect(() => {
+    fetchResources(selectedCategory);
+  }, [selectedCategory]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading resources...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-card shadow-sm border-b border-border">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => window.history.back()}
-                className="text-muted-foreground hover:text-foreground"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-              <div className="flex items-center space-x-2">
-                <BookOpen className="w-5 h-5 text-primary" />
-                <span className="font-semibold text-xl">Resource Library</span>
-              </div>
-            </div>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => window.location.replace("https://www.google.com")}
-            >
-              Quick Exit
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-foreground mb-4">Resource Library</h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Verified articles, guides, and tools to support your healing journey.
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-4">Resource Hub</h1>
+          <p className="text-gray-600 mb-6">
+            Find helpful resources for your healing journey. All resources are carefully curated and verified.
           </p>
+          
+          {/* Category Filter */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            {categories.map(category => (
+              <button
+                key={category.value}
+                onClick={() => setSelectedCategory(category.value)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  selectedCategory === category.value
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-300'
+                }`}
+              >
+                {category.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Add Resource Button */}
+          {user && (
+            <button
+              onClick={() => setShowAddForm(!showAddForm)}
+              className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              {showAddForm ? 'Cancel' : 'Add Resource'}
+            </button>
+          )}
         </div>
 
-        {/* Resource Categories */}
-        <div className="grid lg:grid-cols-4 md:grid-cols-2 gap-6 mb-12">
-          {resourceCategories.map((category) => {
-            const Icon = category.icon;
-            return (
-              <Card key={category.category} className="resource-card hover:border-primary/50 cursor-pointer">
-                <CardContent className="pt-6">
-                  <div className={`w-12 h-12 ${category.color} rounded-lg flex items-center justify-center mb-4`}>
-                    <Icon className="w-6 h-6" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-foreground mb-3">{category.title}</h3>
-                  <p className="text-muted-foreground text-sm mb-4">{category.description}</p>
-                  <div className="text-sm text-muted-foreground mb-4">
-                    {Math.floor(Math.random() * 20) + 5} articles
-                  </div>
-                  <Button variant="link" className="text-primary hover:text-blue-700 p-0 h-auto font-medium text-sm">
-                    Explore resources →
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Emergency Contacts */}
-        <Card className="border-l-4 border-destructive">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Phone className="w-5 h-5 text-destructive" />
-              <span>Emergency Contacts</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid md:grid-cols-3 gap-6">
+        {/* Add Resource Form */}
+        {showAddForm && user && (
+          <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h3 className="text-lg font-semibold mb-4">Add New Resource</h3>
+            <form onSubmit={addResource} className="space-y-4">
               <div>
-                <div className="font-semibold text-foreground">National Domestic Violence Hotline</div>
-                <div className="text-destructive font-bold text-lg">1-800-799-7233</div>
-                <div className="text-sm text-muted-foreground">24/7 confidential support</div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Title
+                </label>
+                <input
+                  type="text"
+                  value={newResource.title}
+                  onChange={(e) => setNewResource({...newResource, title: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
               </div>
+              
               <div>
-                <div className="font-semibold text-foreground">Crisis Text Line</div>
-                <div className="text-destructive font-bold text-lg">Text HOME to 741741</div>
-                <div className="text-sm text-muted-foreground">Free 24/7 crisis support</div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Category
+                </label>
+                <select
+                  value={newResource.category}
+                  onChange={(e) => setNewResource({...newResource, category: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="safety-planning">Safety Planning</option>
+                  <option value="trauma-healing">Trauma Healing</option>
+                  <option value="legal-support">Legal Support</option>
+                  <option value="rebuilding-life">Rebuilding Life</option>
+                </select>
               </div>
+              
               <div>
-                <div className="font-semibold text-foreground">National Sexual Assault Hotline</div>
-                <div className="text-destructive font-bold text-lg">1-800-656-4673</div>
-                <div className="text-sm text-muted-foreground">RAINN's 24/7 support</div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Content
+                </label>
+                <textarea
+                  value={newResource.content}
+                  onChange={(e) => setNewResource({...newResource, content: e.target.value})}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  required
+                />
               </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Resources List */}
-        {resources.length > 0 && (
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold text-foreground mb-6">Latest Resources</h2>
-            <div className="space-y-4">
-              {resources.map((resource) => (
-                <Card key={resource.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-foreground mb-2">{resource.title}</h3>
-                        <p className="text-muted-foreground mb-3">{resource.content}</p>
-                        <div className="flex items-center space-x-4">
-                          <span className="text-sm font-medium text-primary">{resource.category}</span>
-                          {resource.isVerified && (
-                            <span className="text-xs bg-success/20 text-success px-2 py-1 rounded-full">
-                              Verified
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+              
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                >
+                  Add Resource
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddForm(false)}
+                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         )}
+
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <p className="text-red-800">{error}</p>
+          </div>
+        )}
+
+        {/* Resources Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {resources.length === 0 ? (
+            <div className="col-span-full text-center py-12">
+              <p className="text-gray-500 text-lg">No resources found for this category.</p>
+            </div>
+          ) : (
+            resources.map((resource) => (
+              <div key={resource.id} className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                <div className="mb-3">
+                  <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                    {resource.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                  </span>
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">{resource.title}</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">{resource.content}</p>
+                {resource.createdAt && (
+                  <p className="text-xs text-gray-400 mt-4">
+                    Added: {new Date(resource.createdAt).toLocaleDateString()}
+                  </p>
+                )}
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );
-}
+} 
